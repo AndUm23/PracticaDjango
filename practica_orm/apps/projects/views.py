@@ -1,30 +1,68 @@
 from django.shortcuts import render
+
 #other modules
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
 #self modules
 from .models import *
+from .serializers import *
+
 #utils
 from datetime import datetime
 
 # Create your views here.
-class ProjectAPIView(APIView):
+class ProjectViewSet(ModelViewSet):    
+    queryset = Project.objects.all()
+    serializer_class = projectSerializerModel
     
+    '''
+    def set_comment(self, request):
+
+        #get post object
+        my_post = self.get_object()  
+        serializer = projectSerializerModel(data=request.data)                 
+        if serializer.is_valid():
+            serializer.save(post=my_post)
+            return Response(serializer.data)
+
+        return Response(serializer.errors)
+    '''
+    
+class TaskViewSet(ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+class CommentViewSet(ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+class ProjectAPIView(APIView):    
     def get(self, request):
         projects = Project.objects.all()
-        
+        serializer = ProjectSerializer(projects, many = True)
+                
+        '''
         data = [
             {
                 "id" : project.id,
                 "name" : project.name                
             }
             for project in projects
-        ]
-        return Response(data)
+        ] 
+        '''
+        return Response(serializer.data)
         
     def post(self, request):
-        print (request.data)
+        #print (request.data)
         
+        serializer = ProjectSerializer(data = request.data)
+        serializer.is_valid(raise_exception = True)
+        serializer.save()
+        
+        #print(serializer.data)
+        '''
         project = Project()
         project.name = request.data.get('name', "")
         project.init_date = datetime.now()
@@ -32,6 +70,8 @@ class ProjectAPIView(APIView):
         end_date = request.data.get('end_date', "")
         project.end_date = datetime.strptime(end_date, '%d-%m-%YT%H:%M:%S')
         project.save()
+        '''
+        
         return Response({})
     
     def delete(self, request):
